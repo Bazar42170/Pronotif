@@ -4,6 +4,7 @@ import pronotepy
 from urllib.parse import urlparse, urlunparse
 
 from .pronotepy_monlycee import ile_de_france
+from pronotepy.ent import ent_auvergnerhonealpe
 from ..geocoding.geocoder import get_timezone_from_state
 from ..verify_manual_link import clean_url
 import logging
@@ -132,19 +133,22 @@ def global_pronote_login(link: str, username:str, password:str, qr_code_login:bo
         if region is None or region == "":
             return {"error": "Region is required for ENT login"}, 400
     
-        if region!="Île-de-France" and region!="https://psn.monlycee.net":
-            return {"error": "Region not supported yet"}, 400
-        
-        if region=="Île-de-France" or region=="https://psn.monlycee.net":
-            logger.debug("Using Île-de-France ENT settings")
-            #specific login for Île-de-France
-            client = pronotepy.Client(normalized_link, username=username, password=password, ent=ile_de_france)
+        if region == "Île-de-France" or region == "https://psn.monlycee.net":
+    logger.debug("Using Île-de-France ENT settings")
+    client = pronotepy.Client(normalized_link, username=username, password=password, ent=ile_de_france)
 
-            if client.logged_in:
-                return get_student_data(client, ent_used=True, qr_code_login=False, uuid="00000000-0000-0000-0000-000000000000", region=region)
+elif region == "Auvergne-Rhône-Alpes":
+    logger.debug("Using Auvergne-Rhône-Alpes ENT settings")
+    client = pronotepy.Client(normalized_link, username=username, password=password, ent=ent_auvergnerhonealpe)
 
-            else:
-                return {"error": "ENT login failed"}, 400
+else:
+    return {"error": "Region not supported yet"}, 400
+
+if client.logged_in:
+    return get_student_data(client, ent_used=True, qr_code_login=False, uuid="00000000-0000-0000-0000-000000000000", region=region)
+
+else:
+    return {"error": "ENT login failed"}, 400
     
     elif not is_ent_login: #normal login
         logger.debug("Attempting standard Pronote login")
